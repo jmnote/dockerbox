@@ -39,7 +39,9 @@ jobs:
 
   licenses:
     runs-on: ubuntu-latest
-    name: license check
     steps:
-      - uses: actions/checkout@v4
-      - uses: Syu-fu/go-licenses@v0.1.0
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    - run: make licenses
