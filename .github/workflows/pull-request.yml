@@ -41,5 +41,5 @@ jobs:
     runs-on: ubuntu-latest
     name: license check
     steps:
-      - uses: actions/checkout@4
+      - uses: actions/checkout@v4
       - uses: Syu-fu/go-licenses@v0.1.0
