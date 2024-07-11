@@ -17,7 +17,7 @@ lint:
 
 licenses:
 	go install -v github.com/google/go-licenses@$(GO_LICENSES_VER) || true
-	go-licenses check .
+	$(shell go env GOPATH)/bin/go-licenses check .
 .PHONY: licenses
 
 checks: test lint licenses
