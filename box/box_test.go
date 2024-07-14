@@ -47,7 +47,7 @@ func TestRun_ok(t *testing.T) {
 			&RunResult{
 				IsTimedOut: false,
 				CPU:        22404000,
-				MEM:        106496,
+				MEM:        366496,
 				Time:       600,
 				Logs: []LogEntry{
 					{Stream: "stdout", Log: "\n"},
