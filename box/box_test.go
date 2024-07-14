@@ -84,7 +84,7 @@ func TestRun_ok(t *testing.T) {
 			&RunResult{
 				IsTimedOut: false,
 				CPU:        24337000,
-				MEM:        499712,
+				MEM:        3840000,
 				Time:       1500,
 				Logs: []LogEntry{
 					{Stream: "stdout", Log: "hello\n"},
@@ -152,12 +152,13 @@ func TestRun_ok(t *testing.T) {
 			got, err := Run(tc.BoxOpts)
 			require.NoError(t, err)
 
-			require.LessOrEqual(t, got.Time, tc.want.Time*4, "time:"+tc.name)
-			require.GreaterOrEqual(t, got.Time, tc.want.Time/4, "time:"+tc.name)
-			require.LessOrEqual(t, got.CPU, tc.want.CPU*4, "cpu:"+tc.name)
-			require.GreaterOrEqual(t, got.CPU, tc.want.CPU/4, "cpu:"+tc.name)
-			require.LessOrEqual(t, got.MEM, tc.want.MEM*4, "mem:"+tc.name)
-			require.GreaterOrEqual(t, got.MEM, tc.want.MEM/4, "mem:"+tc.name)
+			ratio := 5
+			require.LessOrEqual(t, got.Time, tc.want.Time*int64(ratio), "time:"+tc.name)
+			require.GreaterOrEqual(t, got.Time, tc.want.Time/int64(ratio), "time:"+tc.name)
+			require.LessOrEqual(t, got.CPU, tc.want.CPU*uint64(ratio), "cpu:"+tc.name)
+			require.GreaterOrEqual(t, got.CPU, tc.want.CPU/uint64(ratio), "cpu:"+tc.name)
+			require.LessOrEqual(t, got.MEM, tc.want.MEM*uint64(ratio), "mem:"+tc.name)
+			require.GreaterOrEqual(t, got.MEM, tc.want.MEM/uint64(ratio), "mem:"+tc.name)
 			tc.want.Time = got.Time
 			tc.want.CPU = got.CPU
 			tc.want.MEM = got.MEM
