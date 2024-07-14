@@ -1,8 +1,12 @@
 GOLANGCI_LINT_VER := v1.59.1
 GO_LICENSES_VER := v1.6.0
 
+tidy:
+	go mod tidy
+.PHONY: tidy
+
 test:
-	go test -v ./... -failfast
+	go test -v ./... -race -failfast
 .PHONY: test
 
 cover:
@@ -17,8 +21,8 @@ lint:
 
 licenses:
 	go install -v github.com/google/go-licenses@$(GO_LICENSES_VER) || true
-	$(shell go env GOPATH)/bin/go-licenses check .
+	$(shell go env GOPATH)/bin/go-licenses check ./box/
 .PHONY: licenses
 
-checks: test lint licenses
+checks: tidy test lint licenses
 .PHONY: checks
