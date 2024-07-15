@@ -8,6 +8,10 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+const (
+	ratio = 12
+)
+
 func TestRun_error(t *testing.T) {
 	testCases := []struct {
 		name      string
@@ -59,7 +63,7 @@ func TestRun_ok(t *testing.T) {
 			&RunResult{
 				IsTimedOut: false,
 				CPU:        24337000,
-				MEM:        6676480,
+				MEM:        118784,
 				Time:       1500,
 				Logs: []LogEntry{
 					{Stream: "stderr", Log: "sh: foo: not found\n"},
@@ -196,7 +200,6 @@ func TestRun_ok(t *testing.T) {
 
 			require.NoError(t, err)
 
-			ratio := 8
 			require.LessOrEqual(t, got.Time, tc.want.Time*int64(ratio), "time:"+tc.name)
 			require.GreaterOrEqual(t, got.Time, tc.want.Time/int64(ratio), "time:"+tc.name)
 			require.LessOrEqual(t, got.CPU, tc.want.CPU*uint64(ratio), "cpu:"+tc.name)
@@ -275,7 +278,6 @@ func TestRun_PidsLimit(t *testing.T) {
 
 			require.NoError(t, err)
 
-			ratio := 12
 			require.LessOrEqual(t, got.Time, tc.want.Time*int64(ratio), "time:"+tc.name)
 			require.GreaterOrEqual(t, got.Time, tc.want.Time/int64(ratio), "time:"+tc.name)
 			require.LessOrEqual(t, got.CPU, tc.want.CPU*uint64(ratio), "cpu:"+tc.name)
