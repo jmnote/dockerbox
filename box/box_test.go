@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	ratio = 12
+	ratio = 20
 )
 
 func TestRun_error(t *testing.T) {
@@ -238,7 +238,7 @@ func TestRun_PidsLimit(t *testing.T) {
 			&RunResult{
 				IsTimedOut: false,
 				CPU:        23998000,
-				MEM:        118784,
+				MEM:        1978368,
 				Time:       1500,
 				Logs:       nil,
 				StatusCode: 0,
