@@ -34,6 +34,7 @@ type RunResult struct {
 	MEM        uint64 // bytes
 	Time       int64  // milliseconds
 	Logs       []LogEntry
+	StatusCode int64
 	Warnings   []error
 }
 
@@ -85,25 +86,25 @@ func (b *Box) run() error {
 		return fmt.Errorf("failed to start container: %w", err)
 	}
 
-	if err := b.waitContainer(ctx); err != nil {
+	statusCode, err := b.waitContainer(ctx)
+	if err != nil {
 		b.result.IsTimedOut = true
 	}
+	b.result.StatusCode = statusCode
 
 	b.stopCollectStats()
 	b.collectLogs()
 	return nil
 }
 
-func (b *Box) waitContainer(ctx context.Context) error {
+func (b *Box) waitContainer(ctx context.Context) (int64, error) {
 	statusCh, errCh := b.cli.ContainerWait(ctx, b.containerID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
-		if err != nil {
-			return fmt.Errorf("failed to wait for container: %w", err)
-		}
-	case <-statusCh:
+		return 0, fmt.Errorf("failed to wait for container: %w", err)
+	case status := <-statusCh:
+		return status.StatusCode, nil
 	}
-	return nil
 }
 
 func (b *Box) collectLogs() {
