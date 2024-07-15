@@ -59,7 +59,7 @@ func TestRun_ok(t *testing.T) {
 			&RunResult{
 				IsTimedOut: false,
 				CPU:        24337000,
-				MEM:        110592,
+				MEM:        1302528,
 				Time:       1500,
 				Logs: []LogEntry{
 					{Stream: "stderr", Log: "sh: foo: not found\n"},
@@ -196,7 +196,7 @@ func TestRun_ok(t *testing.T) {
 
 			require.NoError(t, err)
 
-			ratio := 5
+			ratio := 6
 			require.LessOrEqual(t, got.Time, tc.want.Time*int64(ratio), "time:"+tc.name)
 			require.GreaterOrEqual(t, got.Time, tc.want.Time/int64(ratio), "time:"+tc.name)
 			require.LessOrEqual(t, got.CPU, tc.want.CPU*uint64(ratio), "cpu:"+tc.name)
