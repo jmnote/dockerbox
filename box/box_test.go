@@ -45,18 +45,17 @@ func TestRun_ok(t *testing.T) {
 			"exit 42",
 			BoxOpts{Config: container.Config{
 				Image: "alpine",
-				Cmd:   []string{"exit", "42"},
+				Cmd:   []string{"sh", "-c", "echo hello; exit 42"},
 			}},
 			&RunResult{
 				IsTimedOut: false,
 				CPU:        24337000,
-				MEM:        3840000,
+				MEM:        110592,
 				Time:       1500,
 				Logs: []LogEntry{
 					{Stream: "stdout", Log: "hello\n"},
-					{Stream: "stderr", Log: "world\n"},
-					{Stream: "stdout", Log: "hello\n"},
 				},
+				StatusCode: 42,
 			},
 		},
 		{
@@ -102,7 +101,7 @@ func TestRun_ok(t *testing.T) {
 			&RunResult{
 				IsTimedOut: false,
 				CPU:        24337000,
-				MEM:        3840000,
+				MEM:        499712,
 				Time:       1500,
 				Logs: []LogEntry{
 					{Stream: "stdout", Log: "hello\n"},
@@ -168,6 +167,7 @@ func TestRun_ok(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := Run(tc.BoxOpts)
+
 			require.NoError(t, err)
 
 			ratio := 5
