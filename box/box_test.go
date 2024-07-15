@@ -1,35 +1,44 @@
 package box
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 )
 
 func TestRun_error(t *testing.T) {
 	testCases := []struct {
-		BoxOpts   BoxOpts
+		name      string
+		boxOpts   BoxOpts
 		wantError string
 	}{
 		{
+			"empty",
 			BoxOpts{},
 			"precheck err: imagePull err: invalid reference format",
 		},
 		{
+			"image .",
 			BoxOpts{Config: container.Config{Image: "."}},
 			"precheck err: imagePull err: invalid reference format",
 		},
 		{
+			"image a",
 			BoxOpts{Config: container.Config{Image: "a"}},
 			"precheck err: imagePull err: Error response from daemon: pull access denied for a, repository does not exist or may require 'docker login': denied: requested access to the resource is denied",
+		},
+		{
+			"foo",
+			BoxOpts{Config: container.Config{Image: "alpine", Cmd: []string{"foo"}}},
+			"run err: failed to start container: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: \"foo\": executable file not found in $PATH: unknown",
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run("image:"+strings.ReplaceAll(tc.BoxOpts.Config.Image, "/", "%"), func(t *testing.T) {
-			got, err := Run(tc.BoxOpts)
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := Run(tc.boxOpts)
 			require.EqualError(t, err, tc.wantError)
 			require.Nil(t, got)
 		})
@@ -41,6 +50,23 @@ func TestRun_ok(t *testing.T) {
 		BoxOpts BoxOpts
 		want    *RunResult
 	}{
+		{
+			"sh foo",
+			BoxOpts{Config: container.Config{
+				Image: "alpine",
+				Cmd:   []string{"sh", "-c", "foo"},
+			}},
+			&RunResult{
+				IsTimedOut: false,
+				CPU:        24337000,
+				MEM:        110592,
+				Time:       1500,
+				Logs: []LogEntry{
+					{Stream: "stderr", Log: "sh: foo: not found\n"},
+				},
+				StatusCode: 127,
+			},
+		},
 		{
 			"exit 42",
 			BoxOpts{Config: container.Config{
@@ -181,6 +207,90 @@ func TestRun_ok(t *testing.T) {
 			tc.want.CPU = got.CPU
 			tc.want.MEM = got.MEM
 
+			require.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestRun_PidsLimit(t *testing.T) {
+	testCases := []struct {
+		name    string
+		BoxOpts BoxOpts
+		want    *RunResult
+	}{
+		{
+			"bash forkbomb",
+			BoxOpts{
+				Config: container.Config{
+					Image: "bash",
+					Cmd:   []string{"bash", "-c", ":(){ :|:& };:"},
+				},
+				HostConfig: container.HostConfig{
+					Resources: container.Resources{
+						PidsLimit: ptr.To[int64](50),
+					},
+				},
+				Timeout: 2000,
+			},
+			&RunResult{
+				IsTimedOut: false,
+				CPU:        250012000,
+				MEM:        118784,
+				Time:       1500,
+				Logs:       nil,
+				StatusCode: 0,
+			},
+		},
+		{
+			"python forkbomb",
+			BoxOpts{
+				Config: container.Config{
+					Image: "python",
+					Cmd:   []string{"python", "-c", "import os; [os.fork() for _ in range(1000)]"},
+				},
+				HostConfig: container.HostConfig{
+					Resources: container.Resources{
+						PidsLimit: ptr.To[int64](50),
+					},
+				},
+				Timeout: 2000,
+			},
+			&RunResult{
+				IsTimedOut: false,
+				CPU:        250012000,
+				MEM:        13176832,
+				Time:       1500,
+				Logs: []LogEntry{
+					{Stream: "stderr", Log: "Traceback (most recent call last):\n"},
+					{Stream: "stderr", Log: "  File \"<string>\", line 1, in <module>\n"},
+				},
+				StatusCode: 1,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := Run(tc.BoxOpts)
+
+			require.NoError(t, err)
+
+			ratio := 10
+			require.LessOrEqual(t, got.Time, tc.want.Time*int64(ratio), "time:"+tc.name)
+			require.GreaterOrEqual(t, got.Time, tc.want.Time/int64(ratio), "time:"+tc.name)
+			require.LessOrEqual(t, got.CPU, tc.want.CPU*uint64(ratio), "cpu:"+tc.name)
+			require.GreaterOrEqual(t, got.CPU, tc.want.CPU/uint64(ratio), "cpu:"+tc.name)
+			require.LessOrEqual(t, got.MEM, tc.want.MEM*uint64(ratio), "mem:"+tc.name)
+			require.GreaterOrEqual(t, got.MEM, tc.want.MEM/uint64(ratio), "mem:"+tc.name)
+			tc.want.Time = got.Time
+			tc.want.CPU = got.CPU
+			tc.want.MEM = got.MEM
+
+			// Logs
+			for _, l := range tc.want.Logs {
+				require.Contains(t, got.Logs, l)
+			}
+			tc.want.Logs = got.Logs
 			require.Equal(t, tc.want, got)
 		})
 	}
