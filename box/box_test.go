@@ -42,6 +42,24 @@ func TestRun_ok(t *testing.T) {
 		want    *RunResult
 	}{
 		{
+			"exit 42",
+			BoxOpts{Config: container.Config{
+				Image: "alpine",
+				Cmd:   []string{"exit", "42"},
+			}},
+			&RunResult{
+				IsTimedOut: false,
+				CPU:        24337000,
+				MEM:        3840000,
+				Time:       1500,
+				Logs: []LogEntry{
+					{Stream: "stdout", Log: "hello\n"},
+					{Stream: "stderr", Log: "world\n"},
+					{Stream: "stdout", Log: "hello\n"},
+				},
+			},
+		},
+		{
 			"hello-world",
 			BoxOpts{Config: container.Config{Image: "hello-world"}},
 			&RunResult{
