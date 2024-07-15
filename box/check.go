@@ -15,7 +15,7 @@ func (b *Box) precheck() error {
 		return err
 	}
 
-	resp, err := b.cli.ContainerCreate(ctx, &b.opts.Config, nil, nil, nil, "")
+	resp, err := b.cli.ContainerCreate(ctx, &b.opts.Config, &b.opts.HostConfig, nil, nil, "")
 	if err != nil {
 		return fmt.Errorf("failed to create container: %w", err)
 	}

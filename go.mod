@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/docker/docker v27.0.2+incompatible
 	github.com/stretchr/testify v1.9.0
+	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 )
 
 require (

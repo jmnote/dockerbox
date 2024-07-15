@@ -25,6 +25,7 @@ type Box struct {
 type BoxOpts struct {
 	*client.Client
 	container.Config
+	container.HostConfig
 	Timeout int
 }
 
